@@ -113,6 +113,13 @@ img {
   padding: 8px 0;
 }
 
+.section-title button:disabled,
+.arrow-button:disabled,
+.stop-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .hero-dish {
   position: relative;
   overflow: hidden;
@@ -199,6 +206,51 @@ img {
   color: #4f8a3e;
   font-weight: 700;
   padding: 4px 0;
+}
+
+.empty-state {
+  display: grid;
+  align-content: center;
+  min-height: 160px;
+  width: 100%;
+  border: 1px dashed rgba(79, 138, 62, 0.34);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.58);
+  color: #514d45;
+  padding: 22px;
+}
+
+.feature-block .empty-state {
+  min-height: 236px;
+}
+
+.dish-strip .empty-state {
+  grid-column: span 2;
+  min-width: 280px;
+}
+
+.empty-state h3 {
+  margin: 0 0 8px;
+  font-size: 22px;
+  line-height: 1.15;
+}
+
+.empty-state p {
+  margin: 0;
+  color: #706b62;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.empty-state button {
+  justify-self: start;
+  border: 0;
+  border-radius: 8px;
+  margin-top: 16px;
+  padding: 11px 16px;
+  background: #4f8a3e;
+  color: #fff;
+  font-weight: 800;
 }
 
 .quick-actions {
@@ -430,6 +482,13 @@ img {
   white-space: nowrap;
   text-overflow: ellipsis;
   font-size: 12px;
+}
+
+.roller-empty {
+  align-self: center;
+  padding: 20px 10px;
+  color: #777168;
+  white-space: nowrap;
 }
 
 .stop-button {

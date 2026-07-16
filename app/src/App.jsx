@@ -1,113 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
-const STORAGE_KEY = "kitchen-menu-dishes-v1";
-
-const starterDishes = [
-  {
-    id: "pepper-pork",
-    name: "小炒肉",
-    category: "下饭菜",
-    note: "香辣下饭，超级下饭的家常菜",
-    occasion: "适合今天：下饭菜 · 2-3人 · 约20分钟",
-    tags: ["五花肉", "青椒", "蒜苗", "微辣"],
-    lastMade: "今日推荐",
-    favorite: true,
-    selected: true,
-    image:
-      "https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&w=1100&q=88",
-  },
-  {
-    id: "tomato-egg",
-    name: "番茄炒蛋",
-    category: "快手菜",
-    note: "酸甜开胃，十分钟上桌",
-    occasion: "适合今天：快手菜 · 1-2人 · 约10分钟",
-    tags: ["番茄", "鸡蛋", "不辣"],
-    lastMade: "2天前",
-    favorite: true,
-    selected: true,
-    image:
-      "https://images.unsplash.com/photo-1668236543090-82eba5ee5976?auto=format&fit=crop&w=900&q=88",
-  },
-  {
-    id: "ribs",
-    name: "红烧排骨",
-    category: "家常菜",
-    note: "酱香浓郁，适合周末慢慢炖",
-    occasion: "适合今天：硬菜 · 3-4人 · 约45分钟",
-    tags: ["排骨", "冰糖", "酱香"],
-    lastMade: "5天前",
-    favorite: false,
-    selected: true,
-    image:
-      "https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?auto=format&fit=crop&w=900&q=88",
-  },
-  {
-    id: "greens",
-    name: "蒜蓉空心菜",
-    category: "素菜",
-    note: "清爽解腻，配肉菜刚刚好",
-    occasion: "适合今天：素菜 · 2人 · 约8分钟",
-    tags: ["空心菜", "大蒜", "清淡"],
-    lastMade: "7天前",
-    favorite: false,
-    selected: true,
-    image:
-      "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=900&q=88",
-  },
-  {
-    id: "tofu",
-    name: "麻婆豆腐",
-    category: "下饭菜",
-    note: "热乎麻辣，拌饭很香",
-    occasion: "适合今天：下饭菜 · 2-3人 · 约18分钟",
-    tags: ["豆腐", "肉末", "麻辣"],
-    lastMade: "8天前",
-    favorite: true,
-    selected: true,
-    image:
-      "https://images.unsplash.com/photo-1604633619441-7ff5f717481d?auto=format&fit=crop&w=900&q=88",
-  },
-  {
-    id: "fish",
-    name: "清蒸鲈鱼",
-    category: "主食",
-    note: "鲜香清淡，适合想吃舒服点",
-    occasion: "适合今天：清淡菜 · 2-3人 · 约25分钟",
-    tags: ["鲈鱼", "葱姜", "清淡"],
-    lastMade: "收藏",
-    favorite: true,
-    selected: false,
-    image:
-      "https://images.unsplash.com/photo-1534766555764-ce878a5e3a2b?auto=format&fit=crop&w=900&q=88",
-  },
-  {
-    id: "cauliflower",
-    name: "干锅花菜",
-    category: "素菜",
-    note: "带点锅气，脆爽有味",
-    occasion: "适合今天：素菜 · 2人 · 约15分钟",
-    tags: ["花菜", "青红椒", "微辣"],
-    lastMade: "收藏",
-    favorite: false,
-    selected: false,
-    image:
-      "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=900&q=88",
-  },
-  {
-    id: "wings",
-    name: "可乐鸡翅",
-    category: "家常菜",
-    note: "甜咸适口，小朋友也喜欢",
-    occasion: "适合今天：家常菜 · 2-3人 · 约30分钟",
-    tags: ["鸡翅", "可乐", "甜咸"],
-    lastMade: "收藏",
-    favorite: true,
-    selected: false,
-    image:
-      "https://images.unsplash.com/photo-1562967916-eb82221dfb92?auto=format&fit=crop&w=900&q=88",
-  },
-];
+const STORAGE_KEY = "kitchen-menu-dishes-v2";
+const starterDishes = [];
 
 const categories = ["全部", "家常菜", "快手菜", "下饭菜", "小吃", "素菜", "汤羹", "主食"];
 
@@ -147,6 +41,20 @@ function DishThumb({ dish, active, manageMode, onChoose, onDelete, cardRef }) {
       <h3>{dish.name}</h3>
       <p>{dish.lastMade}</p>
     </article>
+  );
+}
+
+function EmptyState({ title, description, actionLabel, onAction }) {
+  return (
+    <div className="empty-state">
+      <h3>{title}</h3>
+      <p>{description}</p>
+      {actionLabel && (
+        <button type="button" onClick={onAction}>
+          {actionLabel}
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -287,6 +195,7 @@ export function App() {
     filteredDishes,
   ]);
   const rollingDishes = dishes;
+  const hasDishes = dishes.length > 0;
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(dishes));
@@ -333,6 +242,8 @@ export function App() {
   }
 
   function stopRoll() {
+    if (!hasDishes) return;
+
     if (isRolling) {
       setIsRolling(false);
       locateDish(activeDishId);
@@ -365,6 +276,7 @@ export function App() {
   function addDish(dish) {
     setDishes((current) => [dish, ...current]);
     setFeaturedId(dish.id);
+    if (!activeDishId) setActiveDishId(dish.id);
   }
 
   function pickDaily() {
@@ -411,14 +323,15 @@ export function App() {
           </button>
         </header>
 
-        {featuredDish && (
-          <section className="feature-block">
-            <div className="section-title">
-              <h2>今日推荐</h2>
-              <button type="button" onClick={pickDaily}>
-                每天推荐一道好菜 ↻
-              </button>
-            </div>
+        <section className="feature-block">
+          <div className="section-title">
+            <h2>今日推荐</h2>
+            <button type="button" onClick={pickDaily} disabled={!hasDishes}>
+              每天推荐一道好菜 ↻
+            </button>
+          </div>
+          {featuredDish ? (
+            <>
             <article className="hero-dish">
               <img src={featuredDish.image} alt={featuredDish.name} />
               <div className="hero-copy">
@@ -438,8 +351,16 @@ export function App() {
                 {featuredDish.favorite ? "已收藏" : "收藏"}
               </button>
             </div>
-          </section>
-        )}
+            </>
+          ) : (
+            <EmptyState
+              title="菜单还是空的"
+              description="先上传你自己的菜品照片，今日推荐和随机决定就会开始工作。"
+              actionLabel="上传第一道菜"
+              onAction={() => setShowForm(true)}
+            />
+          )}
+        </section>
 
         <section className="quick-actions" aria-label="主要操作">
           <button type="button" onClick={() => setShowForm(true)}>
@@ -488,6 +409,14 @@ export function App() {
                 cardRef={(node) => setDishRef(dish.id, node)}
               />
             ))}
+            {!filteredDishes.length && (
+              <EmptyState
+                title="暂无菜品"
+                description="上传菜照后，这里会展示你最近添加的菜。"
+                actionLabel="上传照片"
+                onAction={() => setShowForm(true)}
+              />
+            )}
           </div>
         </section>
 
@@ -508,6 +437,12 @@ export function App() {
                 cardRef={(node) => setDishRef(dish.id, node)}
               />
             ))}
+            {!filteredDishes.length && (
+              <EmptyState
+                title="还没有收藏"
+                description="菜品添加后可以在今日推荐里收藏，也可以直接从全部菜品中选择。"
+              />
+            )}
           </div>
         </section>
 
@@ -516,7 +451,7 @@ export function App() {
             <strong>随机决定</strong>
             <span>全部 {dishes.length} 道</span>
           </div>
-          <button className="arrow-button" type="button" onClick={pickRandomDish} aria-label="上一道">
+          <button className="arrow-button" type="button" onClick={pickRandomDish} aria-label="上一道" disabled={!hasDishes}>
             ‹
           </button>
           <div className="roller-window">
@@ -532,11 +467,12 @@ export function App() {
                 <span>{dish.name}</span>
               </button>
             ))}
+            {!hasDishes && <span className="roller-empty">等待导入菜品</span>}
           </div>
-          <button className="arrow-button" type="button" onClick={pickRandomDish} aria-label="下一道">
+          <button className="arrow-button" type="button" onClick={pickRandomDish} aria-label="下一道" disabled={!hasDishes}>
             ›
           </button>
-          <button className={`stop-button ${isRolling ? "is-running" : ""}`} type="button" onClick={stopRoll}>
+          <button className={`stop-button ${isRolling ? "is-running" : ""}`} type="button" onClick={stopRoll} disabled={!hasDishes}>
             {isRolling ? "停止" : "开始"}
           </button>
         </aside>
