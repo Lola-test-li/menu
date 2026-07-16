@@ -81,6 +81,17 @@ img {
   white-space: nowrap;
 }
 
+.app-alert {
+  border: 1px solid rgba(191, 82, 52, 0.28);
+  border-radius: 8px;
+  margin: -8px 0 18px;
+  padding: 12px 14px;
+  background: rgba(255, 242, 236, 0.84);
+  color: #9d3e2e;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
 .section-title {
   display: flex;
   align-items: center;
@@ -578,6 +589,13 @@ img {
 
 .photo-drop input {
   display: none;
+}
+
+.form-error {
+  margin: 9px 0 0;
+  color: #a53d2e;
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .dish-form label:not(.photo-drop) {

@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 const STORAGE_KEY = "kitchen-menu-dishes-v2";
 const starterDishes = [];
+const MAX_IMAGE_SIZE = 960;
+const IMAGE_QUALITY = 0.72;
 
 const categories = ["全部", "家常菜", "快手菜", "下饭菜", "小吃", "素菜", "汤羹", "主食"];
 
@@ -12,6 +14,39 @@ function readStoredDishes() {
   } catch {
     return starterDishes;
   }
+}
+
+function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onerror = () => reject(new Error("图片读取失败，请换一张试试。"));
+    reader.onload = () => {
+      const image = new Image();
+
+      image.onerror = () => reject(new Error("图片格式无法识别，请换一张试试。"));
+      image.onload = () => {
+        const scale = Math.min(1, MAX_IMAGE_SIZE / Math.max(image.width, image.height));
+        const width = Math.max(1, Math.round(image.width * scale));
+        const height = Math.max(1, Math.round(image.height * scale));
+        const canvas = document.createElement("canvas");
+        const context = canvas.getContext("2d");
+
+        if (!context) {
+          reject(new Error("当前浏览器无法处理图片，请换一张较小的照片。"));
+          return;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        context.drawImage(image, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", IMAGE_QUALITY));
+      };
+      image.src = String(reader.result);
+    };
+
+    reader.readAsDataURL(file);
+  });
 }
 
 function DishThumb({ dish, active, manageMode, onChoose, onDelete, cardRef }) {
@@ -66,20 +101,32 @@ function DishForm({ onClose, onSave }) {
     tags: "",
     image: "",
   });
+  const [imageError, setImageError] = useState("");
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
 
-  const canSave = form.name.trim() && form.image;
+  const canSave = form.name.trim() && form.image && !isProcessingImage;
 
   function updateField(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
-  function handleFile(event) {
+  async function handleFile(event) {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = () => updateField("image", String(reader.result));
-    reader.readAsDataURL(file);
+    setImageError("");
+    setIsProcessingImage(true);
+
+    try {
+      const compressedImage = await compressImage(file);
+      updateField("image", compressedImage);
+    } catch (error) {
+      updateField("image", "");
+      setImageError(error instanceof Error ? error.message : "图片处理失败，请换一张试试。");
+    } finally {
+      setIsProcessingImage(false);
+      event.target.value = "";
+    }
   }
 
   function submit(event) {
@@ -119,9 +166,10 @@ function DishForm({ onClose, onSave }) {
         </div>
 
         <label className="photo-drop">
-          {form.image ? <img src={form.image} alt="菜品预览" /> : <span>选择照片</span>}
+          {form.image ? <img src={form.image} alt="菜品预览" /> : <span>{isProcessingImage ? "正在压缩照片..." : "选择照片"}</span>}
           <input type="file" accept="image/*" onChange={handleFile} />
         </label>
+        {imageError && <p className="form-error">{imageError}</p>}
 
         <label>
           菜名
@@ -169,6 +217,7 @@ function DishForm({ onClose, onSave }) {
 
 export function App() {
   const [dishes, setDishes] = useState(readStoredDishes);
+  const [storageError, setStorageError] = useState("");
   const [activeCategory, setActiveCategory] = useState("全部");
   const [featuredId, setFeaturedId] = useState(dishes[0]?.id);
   const [activeDishId, setActiveDishId] = useState(dishes[0]?.id);
@@ -198,7 +247,12 @@ export function App() {
   const hasDishes = dishes.length > 0;
 
   useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(dishes));
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(dishes));
+      setStorageError("");
+    } catch {
+      setStorageError("照片太多或图片太大，浏览器本地空间不够。请删除一两道菜，或重新上传较小的照片。");
+    }
   }, [dishes]);
 
   useEffect(() => {
@@ -274,7 +328,16 @@ export function App() {
   }
 
   function addDish(dish) {
-    setDishes((current) => [dish, ...current]);
+    const nextDishes = [dish, ...dishes];
+
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextDishes));
+    } catch {
+      setStorageError("这张照片还是太大，保存失败。请换一张更小的照片再试。");
+      return;
+    }
+
+    setDishes(nextDishes);
     setFeaturedId(dish.id);
     if (!activeDishId) setActiveDishId(dish.id);
   }
@@ -322,6 +385,8 @@ export function App() {
             我的菜单
           </button>
         </header>
+
+        {storageError && <div className="app-alert">{storageError}</div>}
 
         <section className="feature-block">
           <div className="section-title">
