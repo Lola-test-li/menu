@@ -222,14 +222,7 @@ function DishDetail({ dish, onClose, onDelete, onToggleFavorite }) {
         </div>
 
         <div className="detail-body">
-          <p>{dish.note}</p>
-          {dish.tags.length > 0 && (
-            <div className="detail-tags">
-              {dish.tags.map((tag) => (
-                <span key={tag}>{tag}</span>
-              ))}
-            </div>
-          )}
+          <p>{dish.note || "暂无备注"}</p>
           <div className="detail-meta">{dish.occasion}</div>
         </div>
 
@@ -251,7 +244,6 @@ function DishForm({ onClose, onSave }) {
     name: "",
     category: "早餐",
     note: "",
-    tags: "",
     image: "",
   });
   const [imageError, setImageError] = useState("");
@@ -290,13 +282,9 @@ function DishForm({ onClose, onSave }) {
       id: `dish-${Date.now()}`,
       name: form.name.trim(),
       category: form.category,
-      note: form.note.trim() || "自己上传的菜单记录",
+      note: form.note.trim(),
       occasion: `适合今天：${form.category} · 自家味道`,
-      tags: form.tags
-        .split(/[，,\s]+/)
-        .map((tag) => tag.trim())
-        .filter(Boolean)
-        .slice(0, 4),
+      tags: [],
       lastMade: "刚添加",
       favorite: false,
       selected: true,
@@ -344,19 +332,11 @@ function DishForm({ onClose, onSave }) {
 
         <label>
           简短备注
-          <input
+          <textarea
             value={form.note}
             onChange={(event) => updateField("note", event.target.value)}
-            placeholder="口味、搭配、是否好喝都可以记"
-          />
-        </label>
-
-        <label>
-          标签
-          <input
-            value={form.tags}
-            onChange={(event) => updateField("tags", event.target.value)}
-            placeholder="用逗号分隔，如 黄豆, 黑豆, 核桃"
+            rows="3"
+            placeholder="口味、搭配、是否好喝、下次怎么调整都可以记"
           />
         </label>
 
