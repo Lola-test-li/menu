@@ -146,15 +146,14 @@ img {
   position: relative;
   overflow: hidden;
   border-radius: 8px 8px 0 0;
-  background: #312517;
+  background: #eee8dd;
   height: 236px;
 }
 
 .hero-dish img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  transform: scale(1.01);
+  object-fit: contain;
 }
 
 .hero-dish::after {
@@ -373,7 +372,7 @@ img {
   overflow: hidden;
   border-radius: 8px;
   border: 2px solid transparent;
-  background: #e6dfd2;
+  background: #eee8dd;
 }
 
 .dish-thumb.is-active .thumb-image {
@@ -383,7 +382,7 @@ img {
 .thumb-image img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .check-button,
@@ -493,8 +492,9 @@ img {
 .roller-window img {
   width: 100%;
   height: 56px;
-  object-fit: cover;
+  object-fit: contain;
   border-radius: 6px;
+  background: #eee8dd;
 }
 
 .roller-window span {
@@ -595,7 +595,8 @@ img {
 .photo-drop img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  background: #eee8dd;
 }
 
 .photo-drop input {
