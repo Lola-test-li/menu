@@ -93,6 +93,49 @@ function EmptyState({ title, description, actionLabel, onAction }) {
   );
 }
 
+function DishDetail({ dish, onClose, onDelete, onToggleFavorite }) {
+  return (
+    <div className="modal-backdrop" role="presentation" onClick={onClose}>
+      <article className="detail-panel" onClick={(event) => event.stopPropagation()}>
+        <div className="detail-head">
+          <div>
+            <p>{dish.category}</p>
+            <h2>{dish.name}</h2>
+          </div>
+          <button type="button" onClick={onClose} aria-label="关闭">
+            ×
+          </button>
+        </div>
+
+        <div className="detail-image">
+          <img src={dish.image} alt={dish.name} />
+        </div>
+
+        <div className="detail-body">
+          <p>{dish.note}</p>
+          {dish.tags.length > 0 && (
+            <div className="detail-tags">
+              {dish.tags.map((tag) => (
+                <span key={tag}>{tag}</span>
+              ))}
+            </div>
+          )}
+          <div className="detail-meta">{dish.occasion}</div>
+        </div>
+
+        <div className="detail-actions">
+          <button className="secondary-action" type="button" onClick={() => onToggleFavorite(dish.id)}>
+            {dish.favorite ? "取消收藏" : "收藏"}
+          </button>
+          <button className="danger-action" type="button" onClick={() => onDelete(dish.id)}>
+            删除这条记录
+          </button>
+        </div>
+      </article>
+    </div>
+  );
+}
+
 function DishForm({ onClose, onSave }) {
   const [form, setForm] = useState({
     name: "",
@@ -224,6 +267,7 @@ export function App() {
   const [isRolling, setIsRolling] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [manageMode, setManageMode] = useState(false);
+  const [detailDishId, setDetailDishId] = useState(null);
   const rollRef = useRef(null);
   const dishRefs = useRef(new Map());
   const rollerRefs = useRef(new Map());
@@ -232,6 +276,10 @@ export function App() {
   const featuredDish = useMemo(
     () => dishes.find((dish) => dish.id === featuredId) || dishes[0],
     [dishes, featuredId],
+  );
+  const detailDish = useMemo(
+    () => dishes.find((dish) => dish.id === detailDishId),
+    [detailDishId, dishes],
   );
 
   const filteredDishes = useMemo(() => {
@@ -309,6 +357,7 @@ export function App() {
   function chooseDish(dish) {
     setActiveDishId(dish.id);
     setIsRolling(false);
+    setDetailDishId(dish.id);
     locateDish(dish.id);
   }
 
@@ -323,6 +372,7 @@ export function App() {
       const next = current.filter((dish) => dish.id !== id);
       if (featuredId === id) setFeaturedId(next[0]?.id);
       if (activeDishId === id) setActiveDishId(next[0]?.id);
+      if (detailDishId === id) setDetailDishId(null);
       return next;
     });
   }
@@ -551,6 +601,14 @@ export function App() {
       </section>
 
       {showForm && <DishForm onClose={() => setShowForm(false)} onSave={addDish} />}
+      {detailDish && (
+        <DishDetail
+          dish={detailDish}
+          onClose={() => setDetailDishId(null)}
+          onDelete={deleteDish}
+          onToggleFavorite={toggleFavorite}
+        />
+      )}
     </main>
   );
 }
