@@ -19,7 +19,8 @@ body {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -641,21 +642,6 @@ img {
   line-height: 1.55;
 }
 
-.detail-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.detail-tags span {
-  border-radius: 999px;
-  background: #efeae1;
-  color: #3f3d39;
-  padding: 6px 10px;
-  font-size: 12px;
-}
-
 .detail-meta {
   border-top: 1px solid rgba(81, 72, 55, 0.12);
   margin-top: 14px;
@@ -731,7 +717,8 @@ img {
 }
 
 .dish-form input,
-.dish-form select {
+.dish-form select,
+.dish-form textarea {
   width: 100%;
   border: 1px solid rgba(81, 72, 55, 0.14);
   border-radius: 8px;
@@ -742,8 +729,14 @@ img {
 }
 
 .dish-form input:focus,
-.dish-form select:focus {
+.dish-form select:focus,
+.dish-form textarea:focus {
   border-color: #4f8a3e;
+}
+
+.dish-form textarea {
+  min-height: 92px;
+  resize: vertical;
 }
 
 .save-dish {
