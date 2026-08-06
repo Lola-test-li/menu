@@ -92,6 +92,17 @@ img {
   line-height: 1.45;
 }
 
+.manage-tip {
+  border: 1px solid rgba(79, 138, 62, 0.24);
+  border-radius: 8px;
+  margin: -8px 0 18px;
+  padding: 12px 14px;
+  background: rgba(241, 248, 235, 0.86);
+  color: #3f7135;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
 .section-title {
   display: flex;
   align-items: center;

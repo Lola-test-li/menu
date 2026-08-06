@@ -5,7 +5,7 @@ const starterDishes = [];
 const MAX_IMAGE_SIZE = 960;
 const IMAGE_QUALITY = 0.72;
 
-const categories = ["全部", "家常菜", "快手菜", "下饭菜", "小吃", "素菜", "汤羹", "主食"];
+const categories = ["全部", "早餐", "家常菜", "快手菜", "下饭菜", "小吃", "素菜", "汤羹", "主食"];
 
 function readStoredDishes() {
   try {
@@ -63,7 +63,7 @@ function DishThumb({ dish, active, manageMode, onChoose, onDelete, cardRef }) {
           <button
             className="delete-button"
             type="button"
-            aria-label="删除菜品"
+            aria-label="删除这张图片和记录"
             onClick={(event) => {
               event.stopPropagation();
               onDelete(dish.id);
@@ -96,7 +96,7 @@ function EmptyState({ title, description, actionLabel, onAction }) {
 function DishForm({ onClose, onSave }) {
   const [form, setForm] = useState({
     name: "",
-    category: "家常菜",
+    category: "早餐",
     note: "",
     tags: "",
     image: "",
@@ -137,7 +137,7 @@ function DishForm({ onClose, onSave }) {
       id: `dish-${Date.now()}`,
       name: form.name.trim(),
       category: form.category,
-      note: form.note.trim() || "自己上传的拿手菜",
+      note: form.note.trim() || "自己上传的菜单记录",
       occasion: `适合今天：${form.category} · 自家味道`,
       tags: form.tags
         .split(/[，,\s]+/)
@@ -157,8 +157,8 @@ function DishForm({ onClose, onSave }) {
       <form className="dish-form" onSubmit={submit} onClick={(event) => event.stopPropagation()}>
         <div className="form-head">
           <div>
-            <p>添加新菜</p>
-            <h2>上传你的菜照</h2>
+            <p>添加记录</p>
+            <h2>上传你的图片</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="关闭">
             ×
@@ -172,11 +172,11 @@ function DishForm({ onClose, onSave }) {
         {imageError && <p className="form-error">{imageError}</p>}
 
         <label>
-          菜名
+          名称
           <input
             value={form.name}
             onChange={(event) => updateField("name", event.target.value)}
-            placeholder="比如：蒜香鸡腿"
+            placeholder="比如：黑豆核桃豆浆"
           />
         </label>
 
@@ -194,7 +194,7 @@ function DishForm({ onClose, onSave }) {
           <input
             value={form.note}
             onChange={(event) => updateField("note", event.target.value)}
-            placeholder="口味、适合场景、做法灵感"
+            placeholder="口味、搭配、是否好喝都可以记"
           />
         </label>
 
@@ -203,7 +203,7 @@ function DishForm({ onClose, onSave }) {
           <input
             value={form.tags}
             onChange={(event) => updateField("tags", event.target.value)}
-            placeholder="用逗号分隔，如 鸡腿, 微辣, 快手"
+            placeholder="用逗号分隔，如 黄豆, 黑豆, 核桃"
           />
         </label>
 
@@ -387,6 +387,11 @@ export function App() {
         </header>
 
         {storageError && <div className="app-alert">{storageError}</div>}
+        {manageMode && (
+          <div className="manage-tip">
+            管理模式已开启：点击图片左上角的 ×，可以删除不想保留的图片和记录。
+          </div>
+        )}
 
         <section className="feature-block">
           <div className="section-title">
@@ -420,8 +425,8 @@ export function App() {
           ) : (
             <EmptyState
               title="菜单还是空的"
-              description="先上传你自己的菜品照片，今日推荐和随机决定就会开始工作。"
-              actionLabel="上传第一道菜"
+              description="先上传早餐、豆浆配料或其他菜品图片，今日推荐和随机决定就会开始工作。"
+              actionLabel="上传第一张图片"
               onAction={() => setShowForm(true)}
             />
           )}
@@ -430,7 +435,7 @@ export function App() {
         <section className="quick-actions" aria-label="主要操作">
           <button type="button" onClick={() => setShowForm(true)}>
             <strong>上传照片</strong>
-            <span>添加新菜</span>
+            <span>添加记录</span>
           </button>
           <button type="button" onClick={() => setShowForm(true)}>
             <strong>添加菜谱</strong>
@@ -477,7 +482,7 @@ export function App() {
             {!filteredDishes.length && (
               <EmptyState
                 title="暂无菜品"
-                description="上传菜照后，这里会展示你最近添加的菜。"
+                description="上传图片后，这里会展示你最近添加的早餐、豆浆配料或菜品。"
                 actionLabel="上传照片"
                 onAction={() => setShowForm(true)}
               />
