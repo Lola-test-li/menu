@@ -81,6 +81,25 @@ img {
   white-space: nowrap;
 }
 
+.sync-badge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(95, 91, 82, 0.16);
+  border-radius: 999px;
+  margin: -10px 0 18px;
+  padding: 7px 11px;
+  background: rgba(255, 255, 255, 0.66);
+  color: #777168;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.sync-badge.is-cloud {
+  border-color: rgba(79, 138, 62, 0.24);
+  background: rgba(241, 248, 235, 0.84);
+  color: #407a37;
+}
+
 .app-alert {
   border: 1px solid rgba(191, 82, 52, 0.28);
   border-radius: 8px;

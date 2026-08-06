@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { MENU_ID, SUPABASE_BUCKET, isCloudConfigured, supabase } from "./supabaseClient";
 
 const STORAGE_KEY = "kitchen-menu-dishes-v2";
 const starterDishes = [];
@@ -13,6 +14,115 @@ function readStoredDishes() {
     return stored ? JSON.parse(stored) : starterDishes;
   } catch {
     return starterDishes;
+  }
+}
+
+function dishFromRow(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    category: row.category,
+    note: row.note || "自己上传的菜单记录",
+    occasion: row.occasion || `适合今天：${row.category} · 自家味道`,
+    tags: Array.isArray(row.tags) ? row.tags : [],
+    lastMade: "云端同步",
+    favorite: Boolean(row.favorite),
+    selected: true,
+    image: row.image_url,
+    imagePath: row.image_path,
+  };
+}
+
+function dataUrlToFile(dataUrl, fileName) {
+  const [header, data] = dataUrl.split(",");
+  const mimeMatch = header.match(/data:(.*?);base64/);
+  const mimeType = mimeMatch?.[1] || "image/jpeg";
+  const binary = window.atob(data);
+  const bytes = new Uint8Array(binary.length);
+
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+
+  return new File([bytes], fileName, { type: mimeType });
+}
+
+async function fetchCloudDishes() {
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from("menu_items")
+    .select("*")
+    .eq("menu_id", MENU_ID)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data.map(dishFromRow);
+}
+
+async function saveCloudDish(dish) {
+  if (!supabase) return dish;
+
+  const imagePath = `${MENU_ID}/${Date.now()}-${Math.random().toString(16).slice(2)}.jpg`;
+  const imageFile = dataUrlToFile(dish.image, "dish-photo.jpg");
+  const { error: uploadError } = await supabase.storage
+    .from(SUPABASE_BUCKET)
+    .upload(imagePath, imageFile, {
+      contentType: "image/jpeg",
+      upsert: false,
+    });
+
+  if (uploadError) throw uploadError;
+
+  const { data: publicImage } = supabase.storage
+    .from(SUPABASE_BUCKET)
+    .getPublicUrl(imagePath);
+
+  const { data, error } = await supabase
+    .from("menu_items")
+    .insert({
+      menu_id: MENU_ID,
+      name: dish.name,
+      category: dish.category,
+      note: dish.note,
+      occasion: dish.occasion,
+      tags: dish.tags,
+      favorite: dish.favorite,
+      image_url: publicImage.publicUrl,
+      image_path: imagePath,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return dishFromRow(data);
+}
+
+async function updateCloudFavorite(id, favorite) {
+  if (!supabase) return;
+
+  const { error } = await supabase
+    .from("menu_items")
+    .update({ favorite })
+    .eq("id", id)
+    .eq("menu_id", MENU_ID);
+
+  if (error) throw error;
+}
+
+async function deleteCloudDish(dish) {
+  if (!supabase) return;
+
+  const { error } = await supabase
+    .from("menu_items")
+    .delete()
+    .eq("id", dish.id)
+    .eq("menu_id", MENU_ID);
+
+  if (error) throw error;
+
+  if (dish.imagePath) {
+    await supabase.storage.from(SUPABASE_BUCKET).remove([dish.imagePath]);
   }
 }
 
@@ -261,6 +371,7 @@ function DishForm({ onClose, onSave }) {
 export function App() {
   const [dishes, setDishes] = useState(readStoredDishes);
   const [storageError, setStorageError] = useState("");
+  const [cloudStatus, setCloudStatus] = useState(isCloudConfigured ? "正在连接云端..." : "本地模式");
   const [activeCategory, setActiveCategory] = useState("全部");
   const [featuredId, setFeaturedId] = useState(dishes[0]?.id);
   const [activeDishId, setActiveDishId] = useState(dishes[0]?.id);
@@ -293,6 +404,31 @@ export function App() {
   ]);
   const rollingDishes = dishes;
   const hasDishes = dishes.length > 0;
+
+  useEffect(() => {
+    if (!isCloudConfigured) return;
+
+    let isCancelled = false;
+
+    async function loadCloudDishes() {
+      try {
+        const cloudDishes = await fetchCloudDishes();
+        if (isCancelled) return;
+        setDishes(cloudDishes);
+        setCloudStatus("云端同步已开启");
+      } catch (error) {
+        if (isCancelled) return;
+        setCloudStatus("云端连接失败，暂时使用本地数据");
+        setStorageError(error.message || "云端连接失败，请检查 Supabase 配置。");
+      }
+    }
+
+    loadCloudDishes();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     try {
@@ -361,13 +497,27 @@ export function App() {
     locateDish(dish.id);
   }
 
-  function toggleFavorite(id) {
+  async function toggleFavorite(id) {
+    const targetDish = dishes.find((dish) => dish.id === id);
+    if (!targetDish) return;
+    const nextFavorite = !targetDish.favorite;
+
     setDishes((current) =>
-      current.map((dish) => (dish.id === id ? { ...dish, favorite: !dish.favorite } : dish)),
+      current.map((dish) => (dish.id === id ? { ...dish, favorite: nextFavorite } : dish)),
     );
+
+    if (isCloudConfigured) {
+      try {
+        await updateCloudFavorite(id, nextFavorite);
+      } catch (error) {
+        setStorageError(error.message || "收藏同步失败，请稍后再试。");
+      }
+    }
   }
 
-  function deleteDish(id) {
+  async function deleteDish(id) {
+    const targetDish = dishes.find((dish) => dish.id === id);
+
     setDishes((current) => {
       const next = current.filter((dish) => dish.id !== id);
       if (featuredId === id) setFeaturedId(next[0]?.id);
@@ -375,9 +525,31 @@ export function App() {
       if (detailDishId === id) setDetailDishId(null);
       return next;
     });
+
+    if (isCloudConfigured && targetDish) {
+      try {
+        await deleteCloudDish(targetDish);
+      } catch (error) {
+        setStorageError(error.message || "删除同步失败，请刷新后再试。");
+      }
+    }
   }
 
-  function addDish(dish) {
+  async function addDish(dish) {
+    if (isCloudConfigured) {
+      try {
+        const cloudDish = await saveCloudDish(dish);
+        const nextDishes = [cloudDish, ...dishes];
+        setDishes(nextDishes);
+        setFeaturedId(cloudDish.id);
+        if (!activeDishId) setActiveDishId(cloudDish.id);
+        setCloudStatus("云端同步已开启");
+      } catch (error) {
+        setStorageError(error.message || "保存到云端失败，请检查 Supabase 配置。");
+      }
+      return;
+    }
+
     const nextDishes = [dish, ...dishes];
 
     try {
@@ -436,6 +608,7 @@ export function App() {
           </button>
         </header>
 
+        <div className={`sync-badge ${isCloudConfigured ? "is-cloud" : ""}`}>{cloudStatus}</div>
         {storageError && <div className="app-alert">{storageError}</div>}
         {manageMode && (
           <div className="manage-tip">
